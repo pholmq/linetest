@@ -5,114 +5,86 @@ import "./style.css";
 
 import * as THREE from "three";
 
-var renderer: THREE.WebGLRenderer,
-  scene: THREE.Object3D<THREE.Object3DEventMap>,
-  camera: THREE.Camera,
-  controls;
-
-const arrLength = 10000;
-
-let positions = new Array(arrLength * 3);
-let myLine: Line2;
-
 // renderer
-renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
-
 // scene
-scene = new THREE.Scene();
-
+const scene = new THREE.Scene();
 // camera
-camera = new THREE.PerspectiveCamera(
+const camera = new THREE.PerspectiveCamera(
   40,
   window.innerWidth / window.innerHeight,
   1,
   10000
 );
 camera.position.set(0, 50, 20);
-
 // controls
-controls = new OrbitControls(camera, renderer.domElement);
+new OrbitControls(camera, renderer.domElement);
 
 scene.add(new THREE.GridHelper());
 
-let lineMaterial = new LineMaterial({
-  color: 0xffff,
-  linewidth: 5,
-  // alphaToCoverage: true,
-});
-
-myLine = new Line2(new LineGeometry(), lineMaterial);
-myLine.material.resolution.set(innerWidth, innerHeight);
-scene.add(myLine);
-
-let vecA = new THREE.Vector3();
-let vecB = new THREE.Vector3();
-let curveArr: THREE.Vector3[] = [];
-// let curve = new THREE.CatmullRomCurve3();
-let curvePoints;
-let indx = 0;
-let clock = new THREE.Clock();
+const clock = new THREE.Clock();
 let delta = 0;
+
+var line: Line2;
+var MAX_POINTS = 500;
+var drawCount = 0;
+
+// geometry
+var geometry = new LineGeometry();
+
+// attributes
+var positions = new Float32Array(MAX_POINTS * 3); // 3 vertices per point
+// geometry.setPositions(positions);
+
+// material
+var material = new LineMaterial({ color: 0xff0000, linewidth: 5 });
+material.resolution.set(window.innerWidth, window.innerHeight);
+
+// line
+line = new Line2(geometry, material);
+scene.add(line);
+
+function updatePositions() {
+  var positions = [];
+  var x = 0;
+  var y = 0;
+  var z = 0;
+  var index = 0;
+
+  for (var i = 0, l = MAX_POINTS; i < l; i++) {
+    x += (Math.random() - 0.5) * 30;
+    y += (Math.random() - 0.5) * 30;
+    z += (Math.random() - 0.5) * 30;
+
+    positions[index++] = x;
+    positions[index++] = y;
+    positions[index++] = z;
+  }
+
+  line.geometry.setPositions(positions);
+}
+
+updatePositions();
 animate();
 function animate() {
   requestAnimationFrame(animate);
   delta += clock.getDelta();
   if (delta > 1) {
     delta = 0;
-    // vecA.set(
-    //   Math.floor(Math.random() * (100 - -100 + 1)) + -100,
-    //   Math.floor(Math.random() * (100 - -100 + 1)) + -100,
-    //   Math.floor(Math.random() * (100 - -100 + 1)) + -100
-    // );
-    // vecB.set(
-    //   Math.floor(Math.random() * (100 - -100 + 1)) + -100,
-    //   Math.floor(Math.random() * (100 - -100 + 1)) + -100,
-    //   Math.floor(Math.random() * (100 - -100 + 1)) + -100
-    // );
+  }
 
-    // curveArr.push(vecA);
-    // curveArr.push(vecB);
+  drawCount = (drawCount + 1) % MAX_POINTS;
 
-    curveArr.push(
-      new THREE.Vector3(
-        Math.floor(Math.random() * (100 - -100 + 1)) + -100,
-        Math.floor(Math.random() * (100 - -100 + 1)) + -100,
-        Math.floor(Math.random() * (100 - -100 + 1)) + -100
-      )
-    );
-    curveArr.push(
-      new THREE.Vector3(
-        Math.floor(Math.random() * (100 - -100 + 1)) + -100,
-        Math.floor(Math.random() * (100 - -100 + 1)) + -100,
-        Math.floor(Math.random() * (100 - -100 + 1)) + -100
-      )
-    );
+  line.geometry.instanceCount = drawCount;
 
-    console.log(curveArr);
-    const curve = new THREE.CatmullRomCurve3(curveArr);
+  if (drawCount === 0) {
+    // periodically, generate new data
 
-    curvePoints = curve.getPoints(arrLength - 1);
-    // console.log(curvePoints);
-    // console.log(positions.length);
-
-    curvePoints.forEach((element) => {
-      positions[indx++] = element.x;
-      positions[indx++] = element.y;
-      positions[indx++] = element.z;
-    });
-    indx = 0;
-
-    // for (let index = 0; index < positions.length; index++) {
-    //   positions[index] = Math.floor(Math.random() * (100 - -100 + 1)) + -100;
-    // }
-
-    // console.log(positions);
-
-    myLine.geometry.setPositions(positions);
-    myLine.geometry.instanceCount;
+    updatePositions();
+    line.material.color.setHSL(Math.random(), 1, 0.5);
   }
 
   renderer.render(scene, camera);
