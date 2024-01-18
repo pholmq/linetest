@@ -25,67 +25,44 @@ new OrbitControls(camera, renderer.domElement);
 
 scene.add(new THREE.GridHelper());
 
-const clock = new THREE.Clock();
-let delta = 0;
-
-var line: Line2;
-var MAX_POINTS = 500;
-var drawCount = 0;
+let line: Line2;
+let MAX_POINTS = 1000;
+let drawCount = 0;
 
 // geometry
-var geometry = new LineGeometry();
+let geometry = new LineGeometry();
 
 // attributes
-var positions = new Float32Array(MAX_POINTS * 3); // 3 vertices per point
+let positions = new Float32Array(MAX_POINTS * 3); // 3 vertices per point
 // geometry.setPositions(positions);
 
 // material
-var material = new LineMaterial({ color: 0xff0000, linewidth: 5 });
+let material = new LineMaterial({ color: 0xff0000, linewidth: 5 });
 material.resolution.set(window.innerWidth, window.innerHeight);
-
-// line
 line = new Line2(geometry, material);
 scene.add(line);
-
-function updatePositions() {
-  var positions = [];
-  var x = 0;
-  var y = 0;
-  var z = 0;
-  var index = 0;
-
-  for (var i = 0, l = MAX_POINTS; i < l; i++) {
-    x += (Math.random() - 0.5) * 30;
-    y += (Math.random() - 0.5) * 30;
-    z += (Math.random() - 0.5) * 30;
-
-    positions[index++] = x;
-    positions[index++] = y;
-    positions[index++] = z;
-  }
-
-  line.geometry.setPositions(positions);
-}
-
-updatePositions();
+let x = 0;
+let y = 0;
+let z = 0;
+let index = 0;
 animate();
 function animate() {
   requestAnimationFrame(animate);
-  delta += clock.getDelta();
-  if (delta > 1) {
-    delta = 0;
-  }
+  x += (Math.random() - 0.5) * 30;
+  y += (Math.random() - 0.5) * 30;
+  z += (Math.random() - 0.5) * 30;
+  positions[index++] = x;
+  positions[index++] = y;
+  positions[index++] = z;
+  line.geometry.instanceCount = drawCount;
 
   drawCount = (drawCount + 1) % MAX_POINTS;
-
-  line.geometry.instanceCount = drawCount;
+  line.geometry.setPositions(positions);
 
   if (drawCount === 0) {
     // periodically, generate new data
-
-    updatePositions();
+    index = 0;
     line.material.color.setHSL(Math.random(), 1, 0.5);
   }
-
   renderer.render(scene, camera);
 }
